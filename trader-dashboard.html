@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>مفكرة المتداول — البيانات الاقتصادية الكبرى</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #f0efe8;
+    --text: #1a1a18; --text2: #6b6b66; --text3: #9c9a92;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --radius: 12px; --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #242422; --bg3: #2a2a27;
+      --text: #e8e6de; --text2: #9c9a92; --text3: #6b6b66;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg3); color: var(--text); }
+  .app { max-width: 430px; margin: 0 auto; min-height: 100vh; background: var(--bg3); position: relative; }
+
+  /* HEADER */
+  .header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; margin-left: 6px; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* TABS */
+  .tabs { display: flex; background: var(--bg); border-bottom: 0.5px solid var(--border); }
+  .tab { flex: 1; padding: 10px 4px; font-size: 12px; text-align: center; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .tab.active { color: var(--text); border-bottom-color: #1E1B4B; font-weight: 600; }
+
+  /* CONTENT */
+  .content { padding: 12px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 8px; }
+  .section-label:first-child { margin-top: 0; }
+
+  /* CARDS */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+
+  /* COUNTDOWN HERO */
+  .hero { background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; color: white; }
+  .hero-badge { font-size: 10px; opacity: 0.7; margin-bottom: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .hero-title { font-size: 17px; font-weight: 600; margin-bottom: 3px; }
+  .hero-sub { font-size: 12px; opacity: 0.75; margin-bottom: 14px; }
+  .hero-units { display: flex; gap: 8px; }
+  .unit { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 10px; flex: 1; text-align: center; }
+  .unit-num { font-size: 22px; font-weight: 600; }
+  .unit-label { font-size: 9px; opacity: 0.7; margin-top: 1px; }
+
+  /* DATA GRID */
+  .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .data-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+  .data-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+  .data-value { font-size: 22px; font-weight: 600; }
+  .data-change { font-size: 11px; margin-top: 3px; }
+  .positive { color: #16a34a; }
+  .negative { color: #dc2626; }
+  .neutral { color: var(--text2); }
+
+  /* IMPACT BARS */
+  .impact-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .impact-row:last-child { border-bottom: none; }
+  .impact-asset { font-size: 13px; font-weight: 500; width: 80px; flex-shrink: 0; }
+  .impact-bar-wrap { flex: 1; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+  .impact-bar-fill { height: 100%; border-radius: 3px; }
+  .impact-level { font-size: 11px; color: var(--text2); width: 70px; text-align: left; flex-shrink: 0; }
+
+  /* ALERTS */
+  .alert { border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+  .alert-icon { font-size: 18px; flex-shrink: 0; }
+  .alert-title { font-size: 13px; font-weight: 600; }
+  .alert-text { font-size: 12px; margin-top: 2px; line-height: 1.4; }
+  .alert.danger { background: #fef2f2; border: 0.5px solid #fecaca; }
+  .alert.danger .alert-title { color: #991b1b; }
+  .alert.danger .alert-text { color: #7f1d1d; }
+  .alert.warning { background: #fffbeb; border: 0.5px solid #fde68a; }
+  .alert.warning .alert-title { color: #92400e; }
+  .alert.warning .alert-text { color: #78350f; }
+  .alert.info { background: #eff6ff; border: 0.5px solid #bfdbfe; }
+  .alert.info .alert-title { color: #1e40af; }
+  .alert.info .alert-text { color: #1e3a8a; }
+  .alert.success { background: #f0fdf4; border: 0.5px solid #bbf7d0; }
+  .alert.success .alert-title { color: #166534; }
+  .alert.success .alert-text { color: #14532d; }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-right: 22px; }
+  .timeline::before { content:''; position:absolute; right:8px; top:10px; bottom:10px; width:0.5px; background:var(--border2); }
+  .timeline-item { position:relative; display:flex; gap:12px; margin-bottom:18px; align-items:flex-start; }
+  .t-dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; margin-top:2px; border:2px solid var(--bg3); position:relative; z-index:1; }
+  .t-dot.red { background:#ef4444; }
+  .t-dot.orange { background:#f59e0b; }
+  .t-dot.blue { background:#3b82f6; }
+  .t-dot.gray { background:var(--border2); }
+  .t-title { font-size:13px; font-weight:500; }
+  .t-date { font-size:11px; color:var(--text2); margin-top:2px; }
+  .t-assets { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  /* BADGES */
+  .badge { font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; display:inline-block; margin-top:5px; }
+  .badge-red { background:#fee2e2; color:#991b1b; }
+  .badge-orange { background:#fef3c7; color:#92400e; }
+  .badge-blue { background:#dbeafe; color:#1e40af; }
+  .badge-green { background:#dcfce7; color:#166534; }
+  .badge-purple { background:#ede9fe; color:#5b21b6; }
+  .badge-gray { background:var(--bg2); color:var(--text2); }
+
+  /* COMPARISON */
+  .comp-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:0.5px solid var(--border); }
+  .comp-row:last-child { border-bottom:none; }
+  .comp-label { font-size:13px; color:var(--text2); }
+  .comp-vals { display:flex; gap:14px; }
+  .comp-val { text-align:center; }
+  .comp-val-label { font-size:10px; color:var(--text3); }
+  .comp-val-num { font-size:14px; font-weight:600; }
+  .tip-box { font-size:12px; color:var(--text2); margin-top:10px; padding:9px; background:var(--bg2); border-radius:var(--radius-sm); line-height:1.5; }
+
+  /* NEWS */
+  .news-item { display:flex; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border); }
+  .news-item:last-child { border-bottom:none; }
+  .news-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+  .news-title { font-size:13px; line-height:1.4; }
+  .news-meta { font-size:11px; color:var(--text3); margin-top:3px; }
+
+  /* SETTINGS */
+  .settings-row { display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:0.5px solid var(--border); }
+  .settings-row:last-child { border-bottom:none; }
+  .settings-label { font-size:14px; }
+  .settings-sub { font-size:12px; color:var(--text2); margin-top:2px; }
+  .toggle { width:44px; height:24px; border-radius:12px; background:var(--border2); position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+  .toggle.on { background:#22c55e; }
+  .toggle-knob { width:20px; height:20px; border-radius:50%; background:white; position:absolute; top:2px; right:2px; transition:right 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+  .toggle.on .toggle-knob { right:22px; }
+
+  /* CHAT BOT */
+  .fab { position:fixed; bottom:20px; left:16px; width:54px; height:54px; border-radius:50%; background:#1E1B4B; color:white; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.25); z-index:200; transition:transform 0.2s; border:none; }
+  .fab:hover { transform:scale(1.06); }
+  .chat-panel { position:fixed; bottom:86px; left:12px; right:12px; max-width:406px; margin:0 auto; background:var(--bg); border:0.5px solid var(--border2); border-radius:var(--radius); padding:14px; z-index:200; box-shadow:0 8px 32px rgba(0,0,0,0.15); display:none; max-height:300px; overflow-y:auto; }
+  .chat-panel.open { display:block; }
+  .chat-panel-title { font-size:13px; font-weight:600; margin-bottom:10px; }
+  .chat-msg { font-size:13px; background:var(--bg2); border-radius:var(--radius-sm); padding:8px 12px; margin-bottom:8px; line-height:1.5; }
+  .chat-msg.bot { background:#ede9fe; color:#3730a3; }
+  .chat-input-row { display:flex; gap:8px; margin-top:10px; }
+  .chat-input-row input { flex:1; font-size:13px; padding:8px 12px; border-radius:var(--radius-sm); border:0.5px solid var(--border2); background:var(--bg2); color:var(--text); outline:none; }
+  .chat-input-row input:focus { border-color:#312E81; }
+  .chat-input-row button { font-size:13px; padding:8px 14px; border-radius:var(--radius-sm); background:#1E1B4B; color:white; border:none; cursor:pointer; white-space:nowrap; }
+
+  /* API STATUS */
+  .api-badge { font-size:11px; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px; }
+  .api-live { background:#dcfce7; color:#166534; }
+  .api-demo { background:#fef3c7; color:#92400e; }
+
+  select { font-size:13px; padding:7px 11px; border-radius:var(--radius-sm); border:0.5px solid var(--border2); background:var(--bg2); color:var(--text); outline:none; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-title"><span class="live-dot"></span>مفكرة المتداول</div>
+      <div class="header-sub">البيانات الاقتصادية الكبرى</div>
+    </div>
+    <div style="text-align:left;">
+      <div style="font-size:14px;font-weight:500;" id="clock">--:--</div>
+      <div class="api-badge api-demo">بيانات تجريبية</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">الرئيسية</div>
+    <div class="tab" onclick="switchTab(1)">التقويم</div>
+    <div class="tab" onclick="switchTab(2)">النتائج</div>
+    <div class="tab" onclick="switchTab(3)">تنبيهات</div>
+    <div class="tab" onclick="switchTab(4)">إعدادات</div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE 0: HOME -->
+    <div class="page active" id="page0">
+
+      <div class="hero">
+        <div class="hero-badge">🚨 أعلى أولوية — الحدث القادم</div>
+        <div class="hero-title">قرار الفائدة FOMC</div>
+        <div class="hero-sub">الاحتياطي الفيدرالي الأمريكي — يونيو 2025</div>
+        <div class="hero-units">
+          <div class="unit"><div class="unit-num" id="cd-d">--</div><div class="unit-label">يوم</div></div>
+          <div class="unit"><div class="unit-num" id="cd-h">--</div><div class="unit-label">ساعة</div></div>
+          <div class="unit"><div class="unit-num" id="cd-m">--</div><div class="unit-label">دقيقة</div></div>
+          <div class="unit"><div class="unit-num" id="cd-s">--</div><div class="unit-label">ثانية</div></div>
+        </div>
+      </div>
+
+      <div class="section-label">البيانات الأخيرة</div>
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-label">🔥 CPI التضخم</div>
+          <div class="data-value positive" id="cpi-val">3.2%</div>
+          <div class="data-change positive">▲ +0.1% فوق التوقع</div>
+        </div>
+        <div class="data-card">
+          <div class="data-label">🔥 NFP الوظائف</div>
+          <div class="data-value positive" id="nfp-val">+275K</div>
+          <div class="data-change positive">▲ +25K فوق التوقع</div>
+        </div>
+        <div class="data-card">
+          <div class="data-label">🔥 PPI أسعار المنتج</div>
+          <div class="data-value neutral" id="ppi-val">2.8%</div>
+          <div class="data-change positive">▼ -0.2% دون التوقع</div>
+        </div>
+        <div class="data-card">
+          <div class="data-label">🚨 سعر الفائدة</div>
+          <div class="data-value neutral" id="rate-val">5.25%</div>
+          <div class="data-change neutral">— بدون تغيير</div>
+        </div>
+      </div>
+
+      <div class="section-label">مستوى التأثير على الأسواق</div>
+      <div class="card">
+        <div class="impact-row">
+          <div class="impact-asset">🥇 الذهب</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill" style="width:88%;background:#ef4444"></div></div>
+          <div class="impact-level">قصوى 🔥</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-asset">💵 الدولار</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill" style="width:92%;background:#ef4444"></div></div>
+          <div class="impact-level">قصوى 🔥</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-asset">📊 Nasdaq</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill" style="width:75%;background:#f59e0b"></div></div>
+          <div class="impact-level">عالي 📈</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-asset">🛢️ النفط</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill" style="width:58%;background:#f59e0b"></div></div>
+          <div class="impact-level">متوسط</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-asset">💶 EUR/USD</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill" style="width:80%;background:#f59e0b"></div></div>
+          <div class="impact-level">عالي 📈</div>
+        </div>
+      </div>
+
+      <div class="section-label">تنبيهات نشطة</div>
+      <div class="alert danger">
+        <div class="alert-icon">🚨</div>
+        <div>
+          <div class="alert-title">تجنب الدخول قبل 15 دقيقة من CPI</div>
+          <div class="alert-text">الأربعاء 14 مايو — 14:30 بتوقيت مكة. تقلب متوقع مرتفع جداً.</div>
+        </div>
+      </div>
+      <div class="alert info">
+        <div class="alert-icon">📊</div>
+        <div>
+          <div class="alert-title">NFP أعلى من التوقع</div>
+          <div class="alert-text">الفعلي 275K مقابل 250K — يدعم الدولار ويؤخر تخفيض الفائدة.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PAGE 1: CALENDAR -->
+    <div class="page" id="page1">
+      <div class="section-label">مايو — يونيو 2025</div>
+      <div class="timeline">
+
+        <div class="timeline-item">
+          <div class="t-dot red"></div>
+          <div>
+            <div class="t-title">🔥 تضخم CPI الأمريكي</div>
+            <div class="t-date">الأربعاء 14 مايو — 14:30 مكة</div>
+            <div class="t-assets">الذهب • العملات • الأسهم</div>
+            <span class="badge badge-red">عالي جداً 🔥</span>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="t-dot red"></div>
+          <div>
+            <div class="t-title">🔥 مؤشر PPI</div>
+            <div class="t-date">الخميس 15 مايو — 14:30 مكة</div>
+            <div class="t-assets">الذهب • الأسهم الصناعية</div>
+            <span class="badge badge-red">عالي جداً 🔥</span>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="t-dot orange"></div>
+          <div>
+            <div class="t-title">📈 PMI الصناعة والخدمات</div>
+            <div class="t-date">الجمعة 23 مايو — 16:45 مكة</div>
+            <div class="t-assets">الأسهم • المؤشرات الأوروبية</div>
+            <span class="badge badge-orange">عالي</span>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="t-dot red"></div>
+          <div>
+            <div class="t-title">🔥 تقرير الوظائف NFP</div>
+            <div class="t-date">الجمعة 6 يونيو — 16:30 مكة</div>
+            <div class="t-assets">كل الأسواق • الدولار • المؤشرات</div>
+            <span class="badge badge-red">عالي جداً 🔥</span>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="t-dot blue"></div>
+          <div>
+            <div class="t-title">🚨 اجتماع FOMC — قرار الفائدة</div>
+            <div class="t-date">الأربعاء 18 يونيو — 22:00 مكة</div>
+            <div class="t-assets">السوق العالمي بالكامل</div>
+            <span class="badge badge-purple">قصوى 🚨</span>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="t-dot blue"></div>
+          <div>
+            <div class="t-title">🎤 مؤتمر باول الصحفي</div>
+            <div class="t-date">الأربعاء 18 يونيو — 22:30 مكة</div>
+            <div class="t-assets">كل الأسواق</div>
+            <span class="badge badge-purple">قصوى 🚨</span>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="t-dot orange"></div>
+          <div>
+            <div class="t-title">📊 نتائج أرباح Nvidia / Apple</div>
+            <div class="t-date">ربع سنوي — يونيو/يوليو</div>
+            <div class="t-assets">Nasdaq • US30 • التكنولوجيا</div>
+            <span class="badge badge-blue">ربع سنوي</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE 2: RESULTS -->
+    <div class="page" id="page2">
+      <div class="section-label">الفعلي vs المتوقع</div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:600;">تقرير الوظائف NFP</div>
+          <span class="badge badge-green">فوق التوقع ▲</span>
+        </div>
+        <div class="comp-row">
+          <div class="comp-label">الوظائف المضافة</div>
+          <div class="comp-vals">
+            <div class="comp-val"><div class="comp-val-label">السابق</div><div class="comp-val-num">232K</div></div>
+            <div class="comp-val"><div class="comp-val-label">المتوقع</div><div class="comp-val-num neutral">250K</div></div>
+            <div class="comp-val"><div class="comp-val-label">الفعلي</div><div class="comp-val-num positive">275K ▲</div></div>
+          </div>
+        </div>
+        <div class="tip-box">💡 الفعلي أعلى → دعم للدولار، ضغط على الذهب والسندات. احتمالية خفض الفائدة تراجعت.</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:600;">التضخم CPI (آخر إصدار)</div>
+          <span class="badge badge-orange">أعلى من التوقع ▲</span>
+        </div>
+        <div class="comp-row">
+          <div class="comp-label">السنوي</div>
+          <div class="comp-vals">
+            <div class="comp-val"><div class="comp-val-label">السابق</div><div class="comp-val-num">3.0%</div></div>
+            <div class="comp-val"><div class="comp-val-label">المتوقع</div><div class="comp-val-num neutral">3.1%</div></div>
+            <div class="comp-val"><div class="comp-val-label">الفعلي</div><div class="comp-val-num negative">3.2% ▲</div></div>
+          </div>
+        </div>
+        <div class="comp-row">
+          <div class="comp-label">الشهري</div>
+          <div class="comp-vals">
+            <div class="comp-val"><div class="comp-val-label">السابق</div><div class="comp-val-num">0.3%</div></div>
+            <div class="comp-val"><div class="comp-val-label">المتوقع</div><div class="comp-val-num neutral">0.3%</div></div>
+            <div class="comp-val"><div class="comp-val-label">الفعلي</div><div class="comp-val-num negative">0.4% ▲</div></div>
+          </div>
+        </div>
+        <div class="tip-box">💡 تضخم أعلى من المتوقع → الفيدرالي سيبقي الفائدة مرتفعة. ضغط على الذهب وأسهم النمو.</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:600;">مؤشر PPI</div>
+          <span class="badge badge-green">دون التوقع ▼</span>
+        </div>
+        <div class="comp-row">
+          <div class="comp-label">السنوي</div>
+          <div class="comp-vals">
+            <div class="comp-val"><div class="comp-val-label">السابق</div><div class="comp-val-num">3.1%</div></div>
+            <div class="comp-val"><div class="comp-val-label">المتوقع</div><div class="comp-val-num neutral">3.0%</div></div>
+            <div class="comp-val"><div class="comp-val-label">الفعلي</div><div class="comp-val-num positive">2.8% ▼</div></div>
+          </div>
+        </div>
+        <div class="tip-box">💡 PPI دون التوقع → إشارة تراجع تضخم المنتجين. قد يدعم الذهب والأسهم.</div>
+      </div>
+
+    </div>
+
+    <!-- PAGE 3: ALERTS -->
+    <div class="page" id="page3">
+      <div class="section-label">تنبيهات نشطة</div>
+
+      <div class="alert danger">
+        <div class="alert-icon">🚨</div>
+        <div>
+          <div class="alert-title">ما قبل الخبر — CPI قادم</div>
+          <div class="alert-text">تنبيه تلقائي قبل 15 دقيقة من CPI. تجنب الصفقات الجديدة في وقت التقلب.</div>
+        </div>
+      </div>
+
+      <div class="alert warning">
+        <div class="alert-icon">⚠️</div>
+        <div>
+          <div class="alert-title">تقلب مرتفع — أسبوع FOMC</div>
+          <div class="alert-text">أسبوع قرار الفيدرالي يقترب. ينصح بتضييق المراكز قبل الاجتماع.</div>
+        </div>
+      </div>
+
+      <div class="alert info">
+        <div class="alert-icon">📊</div>
+        <div>
+          <div class="alert-title">نتائج Nvidia الفصلية قريبة</div>
+          <div class="alert-text">تعلن نتائج Q1 الأسبوع القادم. أثر مباشر على Nasdaq و US30.</div>
+        </div>
+      </div>
+
+      <div class="alert success">
+        <div class="alert-icon">✅</div>
+        <div>
+          <div class="alert-title">NFP أعلى من التوقع</div>
+          <div class="alert-text">الدولار في وضع قوة. مراقبة XAU/USD للضغط السلبي على الذهب.</div>
+        </div>
+      </div>
+
+      <div class="section-label">أخبار جيوسياسية يومية</div>
+      <div class="card">
+        <div class="news-item">
+          <div class="news-dot" style="background:#ef4444"></div>
+          <div>
+            <div class="news-title">توترات تجارية أمريكية-صينية تعود للواجهة</div>
+            <div class="news-meta">الذهب • الين • النفط — منذ 2 ساعة</div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-dot" style="background:#f59e0b"></div>
+          <div>
+            <div class="news-title">أوبك+ يدرس تمديد تخفيضات الإنتاج</div>
+            <div class="news-meta">النفط الخام • العملات النفطية — منذ 4 ساعات</div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-dot" style="background:#3b82f6"></div>
+          <div>
+            <div class="news-title">البنك المركزي الأوروبي: خطاب هاوكش يضغط على اليورو</div>
+            <div class="news-meta">EUR/USD • الأسهم الأوروبية — منذ 6 ساعات</div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-dot" style="background:#8b5cf6"></div>
+          <div>
+            <div class="news-title">بيانات نمو الصين تخيب التوقعات للشهر الثالث</div>
+            <div class="news-meta">مؤشرات آسيا • النفط • المعادن — منذ 8 ساعات</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: SETTINGS -->
+    <div class="page" id="page4">
+      <div class="section-label">ربط API الحي</div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+          لتفعيل البيانات الحية، أدخل مفتاح FRED API المجاني من:
+          <a href="https://fred.stlouisfed.org/docs/api/fred/" target="_blank" style="color:#3b82f6;">fred.stlouisfed.org</a>
+        </div>
+        <input type="text" id="apiKeyInput" placeholder="أدخل FRED API Key هنا..." style="width:100%;font-size:13px;padding:9px 12px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);margin-bottom:8px;direction:ltr;">
+        <button onclick="saveFredKey()" style="width:100%;padding:9px;border-radius:8px;background:#1E1B4B;color:white;border:none;cursor:pointer;font-size:13px;">حفظ وتفعيل البيانات الحية</button>
+        <div id="apiStatus" style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;"></div>
+      </div>
+
+      <div class="section-label">إعدادات التنبيهات</div>
+      <div class="card">
+        <div class="settings-row">
+          <div><div class="settings-label">تنبيه ما قبل الخبر (15 دقيقة)</div><div class="settings-sub">قبل CPI, NFP, FOMC</div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">النتيجة اللحظية</div><div class="settings-sub">الفعلي vs المتوقع فور الإصدار</div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">أخبار جيوسياسية عاجلة</div><div class="settings-sub">حوادث مؤثرة على الأسواق</div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">أرباح فصلية — تكنولوجيا</div><div class="settings-sub">Nvidia, Apple, Microsoft</div></div>
+          <div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+
+      <div class="section-label">مستوى الأهمية</div>
+      <div class="card">
+        <div class="settings-row">
+          <div class="settings-label">🚨 قصوى فقط (FOMC)</div>
+          <div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">🔥 عالي جداً (CPI, NFP, PPI)</div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">📈 عالي (PMI, أرباح)</div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+
+      <div class="section-label">المنطقة الزمنية</div>
+      <div class="card">
+        <div class="settings-row">
+          <div class="settings-label">توقيتك</div>
+          <select>
+            <option>مكة المكرمة (GMT+3)</option>
+            <option>دبي (GMT+4)</option>
+            <option>القاهرة (GMT+3)</option>
+            <option>بيروت (GMT+3)</option>
+            <option>الرياض (GMT+3)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">روابط مفيدة</div>
+      <div class="card">
+        <div class="settings-row">
+          <div class="settings-label">FRED API (مجاني)</div>
+          <a href="https://fred.stlouisfed.org/docs/api/fred/" target="_blank" style="font-size:12px;color:#3b82f6;">فتح ↗</a>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Trading Economics</div>
+          <a href="https://tradingeconomics.com/calendar" target="_blank" style="font-size:12px;color:#3b82f6;">فتح ↗</a>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Investing.com Calendar</div>
+          <a href="https://www.investing.com/economic-calendar" target="_blank" style="font-size:12px;color:#3b82f6;">فتح ↗</a>
+        </div>
+        <div class="settings-row" style="border:none;">
+          <div class="settings-label">ForexFactory Calendar</div>
+          <a href="https://www.forexfactory.com/calendar" target="_blank" style="font-size:12px;color:#3b82f6;">فتح ↗</a>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end app -->
+
+<!-- CHAT BOT FAB -->
+<button class="fab" onclick="toggleChat()" title="مساعد المتداول">🤖</button>
+<div class="chat-panel" id="chatPanel" dir="rtl">
+  <div class="chat-panel-title">مساعد المتداول الذكي</div>
+  <div id="chatMessages">
+    <div class="chat-msg bot">مرحباً! اسألني عن CPI، NFP، FOMC، الذهب، النفط، أو أي بيانات اقتصادية.</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="مثال: ما تأثير CPI على الذهب؟" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()">إرسال</button>
+  </div>
+</div>
+
+<script>
+// ─── TABS ───────────────────────────────────────────────
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.page').forEach((p,i) => p.classList.toggle('active', i===n));
+}
+
+// ─── CLOCK ──────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// ─── COUNTDOWN to FOMC (18 June 2025 22:00 Mecca = UTC+3) ──
+const fomcTarget = new Date('2025-06-18T19:00:00Z'); // UTC
+function updateCountdown() {
+  const diff = fomcTarget - new Date();
+  if (diff <= 0) {
+    ['cd-d','cd-h','cd-m','cd-s'].forEach(id => document.getElementById(id).textContent = '00');
+    return;
+  }
+  document.getElementById('cd-d').textContent = String(Math.floor(diff/86400000)).padStart(2,'0');
+  document.getElementById('cd-h').textContent = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+  document.getElementById('cd-m').textContent = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  document.getElementById('cd-s').textContent = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+// ─── FRED API (مجاني — CPI, NFP, سعر الفائدة) ─────────────
+const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+async function fetchFred(series, apiKey) {
+  const url = `${FRED_BASE}?series_id=${series}&api_key=${apiKey}&sort_order=desc&limit=2&file_type=json`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.observations;
+}
+
+async function loadFredData(apiKey) {
+  try {
+    const [cpiData, rateData] = await Promise.all([
+      fetchFred('CPIAUCSL', apiKey),
+      fetchFred('FEDFUNDS', apiKey)
+    ]);
+    if (cpiData && cpiData.length >= 2) {
+      const latest = parseFloat(cpiData[0].value);
+      const prev   = parseFloat(cpiData[1].value);
+      const yoy    = (((latest - prev) / prev) * 100 * 12).toFixed(1);
+      document.getElementById('cpi-val').textContent = yoy + '%';
+    }
+    if (rateData && rateData.length > 0) {
+      document.getElementById('rate-val').textContent = parseFloat(rateData[0].value).toFixed(2) + '%';
+    }
+    document.querySelector('.api-badge').className = 'api-badge api-live';
+    document.querySelector('.api-badge').textContent = '🟢 بيانات حية';
+  } catch(e) {
+    document.getElementById('apiStatus').textContent = '❌ تحقق من صحة المفتاح أو الاتصال';
+  }
+}
+
+function saveFredKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) return;
+  localStorage.setItem('fredApiKey', key);
+  document.getElementById('apiStatus').textContent = '⏳ جاري تحميل البيانات الحية...';
+  loadFredData(key);
+}
+
+// Auto-load if key saved
+const savedKey = localStorage.getItem('fredApiKey');
+if (savedKey) {
+  document.getElementById('apiKeyInput').value = savedKey;
+  loadFredData(savedKey);
+}
+
+// ─── CHAT BOT ─────────────────────────────────────────────
+function toggleChat() {
+  document.getElementById('chatPanel').classList.toggle('open');
+}
+
+const answers = {
+  'cpi':   'CPI يقيس التضخم السنوي. إذا جاء الفعلي أعلى من التوقع → ضغط على الذهب وأسهم النمو، دعم للدولار. إذا جاء أدنى → عكس ذلك.',
+  'nfp':   'NFP يصدر أول جمعة كل شهر. الفعلي الأخير 275K vs متوقع 250K — إيجابي للدولار. تجنب الدخول 30 دقيقة قبل وبعد الإصدار.',
+  'fomc':  'FOMC القادم: 18 يونيو. يؤثر على السوق العالمي بالكامل. مؤتمر باول بعده بـ 30 دقيقة أهم من القرار نفسه أحياناً.',
+  'ppi':   'PPI يسبق CPI في الإشارة للتضخم. الفعلي الأخير 2.8% vs متوقع 3.0% — مؤشر إيجابي لتراجع التضخم.',
+  'ذهب':   'الذهب يرتفع مع: التضخم المرتفع، الأزمات الجيوسياسية، تخفيض الفائدة. يهبط مع: NFP قوي، تصريحات هاوكش للفيدرالي.',
+  'نفط':   'النفط يتأثر بـ: قرارات أوبك+، البيانات الصينية، والتوترات الجيوسياسية. أوبك+ يدرس تمديد تخفيضات الإنتاج حالياً.',
+  'دولار': 'الدولار يقوى مع: NFP مرتفع، CPI فوق التوقع، تصريحات هاوكش. يضعف مع: بيانات مخيبة أو توقعات خفض الفائدة.',
+  'فائدة': 'سعر الفائدة الأمريكي حالياً 5.25%. السوق يتوقع أول خفض في نهاية 2025. كل اجتماع FOMC هو محطة مراقبة.',
+  'pmi':   'PMI فوق 50 = توسع اقتصادي. دون 50 = انكماش. مؤشر مهم لصحة القطاع الصناعي والخدمي.',
+};
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msgs  = document.getElementById('chatMessages');
+  const q = input.value.trim();
+  if (!q) return;
+
+  const uDiv = document.createElement('div');
+  uDiv.className = 'chat-msg';
+  uDiv.textContent = q;
+  msgs.appendChild(uDiv);
+  input.value = '';
+
+  setTimeout(() => {
+    const bot = document.createElement('div');
+    bot.className = 'chat-msg bot';
+    const ql = q;
+    const key = Object.keys(answers).find(k => ql.includes(k));
+    bot.textContent = key ? answers[key] : 'يمكنك السؤال عن: CPI، NFP، FOMC، PPI، PMI، الذهب، النفط، الدولار، أو الفائدة.';
+    msgs.appendChild(bot);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 500);
+}
+</script>
+</body>
+</html>
