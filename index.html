@@ -614,34 +614,65 @@ function updateCountdown() {
 updateCountdown();
 setInterval(updateCountdown, 1000);
 
-// ─── FRED API (مجاني — CPI, NFP, سعر الفائدة) ─────────────
+// ─── FRED API — with CORS proxy fallback ─────────────
 const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
-async function fetchFred(series, apiKey) {
-  const url = `${FRED_BASE}?series_id=${series}&api_key=${apiKey}&sort_order=desc&limit=2&file_type=json`;
+const CORS_PROXY = 'https://corsproxy.io/?url=';
+
+async function fetchFred(series, apiKey, useProxy) {
+  const directUrl = `${FRED_BASE}?series_id=${series}&api_key=${apiKey}&sort_order=desc&limit=13&file_type=json`;
+  const url = useProxy ? CORS_PROXY + encodeURIComponent(directUrl) : directUrl;
   const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
   return data.observations;
 }
 
 async function loadFredData(apiKey) {
-  try {
-    const [cpiData, rateData] = await Promise.all([
-      fetchFred('CPIAUCSL', apiKey),
-      fetchFred('FEDFUNDS', apiKey)
-    ]);
-    if (cpiData && cpiData.length >= 2) {
-      const latest = parseFloat(cpiData[0].value);
-      const prev   = parseFloat(cpiData[1].value);
-      const yoy    = (((latest - prev) / prev) * 100 * 12).toFixed(1);
-      document.getElementById('cpi-val').textContent = yoy + '%';
+  const statusEl = document.getElementById('apiStatus');
+  statusEl.textContent = '⏳ جاري الاتصال...';
+  
+  // Try direct first, then proxy
+  for (const useProxy of [false, true]) {
+    try {
+      const [cpiData, rateData, ppiData] = await Promise.all([
+        fetchFred('CPIAUCSL', apiKey, useProxy),
+        fetchFred('FEDFUNDS', apiKey, useProxy),
+        fetchFred('PPIACO',   apiKey, useProxy)
+      ]);
+
+      // CPI year-over-year
+      if (cpiData && cpiData.length >= 13) {
+        const latest = parseFloat(cpiData[0].value);
+        const yearAgo = parseFloat(cpiData[12].value);
+        const yoy = (((latest - yearAgo) / yearAgo) * 100).toFixed(1);
+        document.getElementById('cpi-val').textContent = yoy + '%';
+      }
+
+      // Federal Funds Rate
+      if (rateData && rateData.length > 0) {
+        const validRate = rateData.find(o => o.value !== '.');
+        if (validRate) document.getElementById('rate-val').textContent = parseFloat(validRate.value).toFixed(2) + '%';
+      }
+
+      // PPI year-over-year
+      if (ppiData && ppiData.length >= 13) {
+        const latest = parseFloat(ppiData[0].value);
+        const yearAgo = parseFloat(ppiData[12].value);
+        const yoy = (((latest - yearAgo) / yearAgo) * 100).toFixed(1);
+        document.getElementById('ppi-val').textContent = yoy + '%';
+      }
+
+      document.querySelector('.api-badge').className = 'api-badge api-live';
+      document.querySelector('.api-badge').textContent = '🟢 بيانات حية';
+      statusEl.textContent = '✅ تم الاتصال بنجاح — البيانات حية من الفيدرالي';
+      statusEl.style.color = '#16a34a';
+      return;
+
+    } catch(e) {
+      if (!useProxy) continue; // try proxy next
+      statusEl.textContent = '❌ فشل الاتصال. تحقق من المفتاح أو الإنترنت.';
+      statusEl.style.color = '#dc2626';
     }
-    if (rateData && rateData.length > 0) {
-      document.getElementById('rate-val').textContent = parseFloat(rateData[0].value).toFixed(2) + '%';
-    }
-    document.querySelector('.api-badge').className = 'api-badge api-live';
-    document.querySelector('.api-badge').textContent = '🟢 بيانات حية';
-  } catch(e) {
-    document.getElementById('apiStatus').textContent = '❌ تحقق من صحة المفتاح أو الاتصال';
   }
 }
 
